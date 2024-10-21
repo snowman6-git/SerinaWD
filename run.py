@@ -12,6 +12,7 @@ with open('token.json', 'r') as file:
 
 @bot.event
 async def on_ready():
+    await bot.change_presence(activity=discord.CustomActivity(name=f"SeRinaWD - BETA"))
     # 한번만 동기화 (안되면 빼샘) by fisher
     if not hasattr(bot, 'synced'):
         await bot.tree.sync()

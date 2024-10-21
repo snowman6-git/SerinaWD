@@ -1,7 +1,7 @@
 from discord.ext import commands
 from discord import app_commands
-import discord, asyncio, time
-from discord import ButtonStyle, Interaction, Embed, FFmpegPCMAudio, VoiceClient
+import discord, asyncio, time, random
+from discord import ButtonStyle, Interaction, Embed, VoiceClient
 from discord.ui import View, Button
 from discord.ext.commands import Bot
 from lib.tools import clock, Revolver, SoundAsset
@@ -130,22 +130,22 @@ class Game(commands.Cog,):
             view.add_item(join_btn)
             embed.add_field(name=f"현재 참가자", value=f"없음", inline=False)
 
-            menu = await interaction.response.send_message(embed=embed, view=view)
+            await interaction.response.send_message(embed=embed, view=view)
             voice = await voice_connect(self, interaction)
             await wait(view, join_btn, 10)#class로 리볼버 객체 만들어서 사운드 조절할것 발당 나누기 해서 대기시간 줄여서 탄 많을수록 재장전 속도 빠르게하기
             join_btn.disabled = True  # 버튼 비활성화
-
-
-
             
-            async def triger(interaction: discord.Interaction):
-                triger_btn.disabled = True
-                embed = Embed(title=f"러시안 룰렛", description=f"")
-                embed.add_field(name=f"조준...!", value=f"", inline=False)
-                await interaction.edit_original_response(embed=embed, view=view)
+            async def press(interaction: discord.Interaction, player):
                 await interaction.response.defer()
-                await revolver.shot()
+                print(interaction.user.name, player)
+                if not interaction.user.name == player:
+                    await interaction.response.send_message("대체로, 남의 턴을 방해하는건 예의가 아니에요.", ephemeral=True) #ephemeral=True 나만보기
 
+                triger_btn.disabled = True
+                await revolver.triger()
+                embed.set_field_at(0, name="조준...!", value=f"", inline=False)
+                await interaction.edit_original_response(embed=embed, view=view)
+                pass
 
             view = View()
             triger_btn = Button(
@@ -158,24 +158,46 @@ class Game(commands.Cog,):
             revolver = Revolver(self.bot, voice)    #객체 가져오기 이후 변수로 호출말곤 볼일없음
 
             for bullet in range(1, 6): #장전 턴 지날수록 사망확률 증가
-                embed = Embed(title=f"러시안 룰렛", description=f"")
+                print(f"턴 시작! 총알 수: {bullet} 유저 수: {len(party)}")
+                if len(party) == 1: break #나중에 한개로 하기
+                
+
                 embed.add_field(name=f"{bullet}발 재장전중...", value=f"", inline=False)
                 await interaction.edit_original_response(embed=embed, view=view)
                 await revolver.reload(bullet)
-                for player in range(len(party)):
+
+                for player in range(0, len(party)):
                     print("차례존 진입")
                     embed = Embed(title=f"러시안 룰렛", description=f"{party[player]}의 차례!")
                     embed.add_field(name=f"발포: {clock(5)}", value=f"", inline=False)
                     await interaction.edit_original_response(embed=embed, view=view)
-                    triger_btn.callback = triger
+                    triger_btn.callback = press
                     await asyncio.sleep(5)
-                    await triger()
-                    print("시간종료, 발포")
 
+                    print("게임 시작!")
+                    await asyncio.sleep(1)
+                    triger_btn.disabled = False
+                    silnder = random.randint(bullet, 6)
+                    
+                    print(silnder)
+                    if silnder == 6:
+                        party.remove(party[player])
+                        embed.set_field_at(0, name="사망!", value=f"", inline=False)
+                        await revolver.shot()
+                    if silnder != 6 and bullet == 6:
+                        embed.set_field_at(0, name="불량탄이었네요.", value=f"", inline=False)
+                    if silnder != 6:
+                        embed.set_field_at(0, name="생존!", value=f"", inline=False)
+                        await revolver.empty()
+                    
+                    await interaction.edit_original_response(embed=embed, view=view)
+                    await asyncio.sleep(2)
 
-
-            # await revolver.reload(6)
-            # await revolver.shot()
+                    if len(party) == 1:
+                        print("게임종료!")
+                        embed.set_field_at(0, name="게임종료! ", value=f"생존: {party[0]}", inline=False)
+                        await interaction.edit_original_response(embed=embed, view=view)
+                        break; break
         except Exception as E:
             print(f"에러! {E}")
             

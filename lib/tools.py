@@ -7,6 +7,7 @@ OPEN_SOUNDS = f"{ASSET_SOUNDS}/{"open.mp3"}"
 BULLET_SOUNDS = f"{ASSET_SOUNDS}/{"bullet.mp3"}"
 BANG_SOUNDS = f"{ASSET_SOUNDS}/{"bang.mp3"}"
 TRIGER_SOUNDS = f"{ASSET_SOUNDS}/{"triger.mp3"}"
+SPIN_SOUNDS = f"{ASSET_SOUNDS}/{"spin.mp3"}"
 
 class SoundAsset:
     def __init__(self, bot, voice):
@@ -27,13 +28,14 @@ class Revolver: #잠 깨면 최적화 해둬라
         for turn in range(0, bullet): #불발탄 추가로 형평성 만들기, 채울 탄수별 속도차이넣기
             await self.sound.play(BULLET_SOUNDS)
         await self.sound.play(OPEN_SOUNDS)
+        await self.sound.play(SPIN_SOUNDS)
 
+    async def triger(self): #나중에 정리해라
+        await self.sound.play(TRIGER_SOUNDS)
     async def shot(self):
-        try:
-            await self.sound.play(TRIGER_SOUNDS)
-            await self.sound.play(BANG_SOUNDS)
-        except Exception as E:
-            print(E)
+        await self.sound.play(BANG_SOUNDS)    
+    async def empty(self):
+        await self.sound.play(OPEN_SOUNDS)
 
 
 class Cogs: #잠 깨면 최적화 해둬라
@@ -86,7 +88,6 @@ def addon_list():
     return  addons
 
 async def bootup(bot, COGS_FOLDER):
-    
     for filename in os.listdir(COGS_FOLDER):
         if filename.endswith(".py"):
             cogs = Cogs(bot=bot)
