@@ -1,57 +1,55 @@
-import os, time
+import os
+import time
 
-class Cogs: #잠 깨면 최적화 해둬라
+class Cogs:
     def __init__(self, bot):
         self.bot = bot
+
+    # 중복코드 통합 함수
     async def load(self, target):
-        try:
-            await self.bot.load_extension(f"cogs.{target}")
-            print(f"\033[32m{target}\033[0m is \033[32mOK\033[0m!")
-            return "pass"
-        except Exception as E:
-            print(f"\033[31m{f"{target}"}\033[0m is \033[31mERROR\033[0m!\n{E}")
-            print("="*30)
-            return E
+        return await self._manage_extension(target, "load")
+
     async def reload(self, target):
-        try:
-            # await self.bot.reload_extension(f"cogs.{target}")
-            await self.bot.unload_extension(f"cogs.{target}")
-            await self.bot.load_extension(f"cogs.{target}")
-            # await self.bot.tree.sync()
-            print(f"\033[32m{f"{target}"}\033[0m is \033[32mreloaded!\033[0m!")
-            return "pass"
-        except Exception as E:
-            print(f"\033[31m{f"{target}"}\033[0m is \033[31mERROR\033[0m!\n{E}")
-            print("="*30)
-            return E
+        return await self._manage_extension(target, "reload")
+
     async def unload(self, target):
+        return await self._manage_extension(target, "unload")
+
+    # 코드 통합
+    async def _manage_extension(self, target, action):
         try:
-            await self.bot.unload_extension(f"cogs.{target}")
-            print(f"\033[90m{f"{target}"}\033[0m is \033[90munloaded\033[0m!")
+            extension = f"cogs.{target}"
+            if action == "load":
+                await self.bot.load_extension(extension)
+                print(f"\033[32m{target}\033[0m is \033[32mOK\033[0m!")
+            elif action == "reload":
+                await self.bot.unload_extension(extension)
+                await self.bot.load_extension(extension)
+                print(f"\033[32m{target}\033[0m is \033[32mreloaded!\033[0m!")
+            elif action == "unload":
+                await self.bot.unload_extension(extension)
+                print(f"\033[90m{target}\033[0m is \033[90munloaded\033[0m!")
             return "pass"
         except Exception as E:
-            print(f"\033[31m{f"{target}"}\033[0m is \033[31mERROR\033[0m!\n{E}")
+            # 중복 예외 처리 코드 모으기
+            print(f"\033[31m{target}\033[0m is \033[31mERROR\033[0m!\n{E}")
             print("="*30)
             return E
+
     @staticmethod
     def find_and_load():
         return Cogs()
-    
+
 def clock(wait):
-    timer = f"<t:{int(time.time()) + int(wait)}:R>" #R
-    return timer
+    return f"<t:{int(time.time()) + int(wait)}:R>"
 
-
+#반복문 최적화
 def addon_list():
-    addons = []
-    target = os.listdir("./cogs")
-    for i in range(len(target)):
-        if target[i].endswith(".py"): addons.append(target[i].split(".")[0])
-    return  addons
+    #TODO <- 완료 : 파일 필터링 및 변환과정 1단계로 바꾸기
+    return [addon.split(".")[0] for addon in os.listdir("./cogs") if addon.endswith(".py")]
 
 async def bootup(bot, COGS_FOLDER):
-    
+    cogs = Cogs(bot=bot)  # TODO <- 완료: cogs 클래스 인스틴스 한번만 생성후 재사용
     for filename in os.listdir(COGS_FOLDER):
         if filename.endswith(".py"):
-            cogs = Cogs(bot=bot)
             await cogs.load(filename[:-3])

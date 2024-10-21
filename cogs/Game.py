@@ -16,6 +16,10 @@ def asset_reload(DView, sounds):
             print("밸류 에러")
     return DView
 
+#시간 함수
+def clock(hours=0, minutes=0, seconds=0):
+    total_seconds = (hours * 3600) + (minutes * 60) + seconds
+    return f"<t:{int(time.time()) + total_seconds}:R>"
 
 async def voice_connect(self, interaction): #나중에 모듈화 해서 글로벌 하게 사용하기
     voice: VoiceClient = None
@@ -32,28 +36,28 @@ async def voice_connect(self, interaction): #나중에 모듈화 해서 글로�
         voice = await interaction.user.voice.channel.connect()
         self.bot.voice_connections.append(voice)
         
-    
     return voice
 
 class Game(commands.Cog,):
     def __init__(self, bot: Bot):
         self.bot = bot
 
-
-
     @commands.Cog.listener()
     async def on_ready(self):
         await self.bot.tree.sync()
         # print(f'{self.bot.user}의 슬래시 커맨드가 동기화되었습니다.')
-
+    
+    #TODO <- 완료: 타이머 고치기
     @app_commands.command(name="타이머", description="시간 포메팅")
-    @app_commands.describe(option="시간")
-    async def choose(self, interaction: discord.Interaction, option: int):
+    @app_commands.describe(hours="시간", minutes="분", seconds="초")
+    async def timer(self, interaction: discord.Interaction, hours: int = 0, minutes: int = 0, seconds: int = 0):
         try:
-            print(clock(option))
-            await interaction.response.send_message(clock(option))
+            timer_result = clock(hours, minutes, seconds) #입력값을 받고 타이머 값으로 설정
+            await interaction.response.defer()
+
+            await interaction.followup.send(content=f"타이머 설정 완료: {timer_result}") #타이머값 설정
         except Exception as E:
-            print(E)
+            await interaction.followup.send(content=f"에러: {str(E)}")
 
     @commands.command("사운드")#사운드나 패키지로 함수 하나로 수정해놔라. ex(asset_play)
     async def upload(self, ctx: commands.Context):
