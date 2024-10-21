@@ -52,7 +52,7 @@ async def addons(interaction: discord.Interaction, action: app_commands.Choice[s
 
 async def main():
     async with bot:
-        print("\n" * 10)
+        # print("\n" * 10)
         await tools.bootup(bot, COGS_FOLDER)
         await bot.start(token)
 

@@ -1,4 +1,40 @@
-import os, time
+import os, time, asyncio
+from discord import ButtonStyle, Interaction, Embed, FFmpegPCMAudio
+
+ASSET_SOUNDS = os.path.join(os.path.dirname(__file__), "..", "assets/sounds")
+
+OPEN_SOUNDS = f"{ASSET_SOUNDS}/{"open.mp3"}"
+BULLET_SOUNDS = f"{ASSET_SOUNDS}/{"bullet.mp3"}"
+BANG_SOUNDS = f"{ASSET_SOUNDS}/{"bang.mp3"}"
+TRIGER_SOUNDS = f"{ASSET_SOUNDS}/{"triger.mp3"}"
+
+class SoundAsset:
+    def __init__(self, bot, voice):
+        self.bot = bot
+        self.voice = voice
+    async def play(self, sound):
+        self.voice.play(FFmpegPCMAudio(source=sound))
+        while self.voice.is_playing():
+            await asyncio.sleep(0.5)
+
+class Revolver: #잠 깨면 최적화 해둬라
+    def __init__(self, bot, voice):
+        self.bot = bot
+        self.sound = SoundAsset(self.bot, voice) #나중에 고쳐
+
+    async def reload(self, bullet):
+        await self.sound.play(OPEN_SOUNDS)
+        for turn in range(0, bullet): #불발탄 추가로 형평성 만들기, 채울 탄수별 속도차이넣기
+            await self.sound.play(BULLET_SOUNDS)
+        await self.sound.play(OPEN_SOUNDS)
+
+    async def shot(self):
+        try:
+            await self.sound.play(TRIGER_SOUNDS)
+            await self.sound.play(BANG_SOUNDS)
+        except Exception as E:
+            print(E)
+
 
 class Cogs: #잠 깨면 최적화 해둬라
     def __init__(self, bot):
